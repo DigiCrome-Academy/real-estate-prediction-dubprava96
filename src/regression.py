@@ -17,6 +17,7 @@ Models to implement:
 
 import numpy as np
 import pandas as pd
+
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.tree import DecisionTreeRegressor
@@ -30,6 +31,10 @@ from sklearn.model_selection import cross_val_score
 # =============================================================================
 
 def build_linear_regression(X_train, y_train):
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+    return model
+
     """
     Build and train a basic Linear Regression model.
 
@@ -48,10 +53,14 @@ def build_linear_regression(X_train, y_train):
         True
     """
     # TODO: Implement this function
-    raise NotImplementedError("Implement build_linear_regression()")
+    #raise NotImplementedError("Implement build_linear_regression()")
 
 
 def build_ridge_regression(X_train, y_train, alpha=1.0):
+    model = Ridge(alpha=alpha)
+    model.fit(X_train, y_train)
+    return model
+
     """
     Build and train a Ridge Regression model.
 
@@ -64,10 +73,14 @@ def build_ridge_regression(X_train, y_train, alpha=1.0):
         Ridge: Fitted model.
     """
     # TODO: Implement this function
-    raise NotImplementedError("Implement build_ridge_regression()")
+    #raise NotImplementedError("Implement build_ridge_regression()")
 
 
 def build_lasso_regression(X_train, y_train, alpha=1.0):
+    model = Lasso(alpha=alpha, max_iter=10000)
+    model.fit(X_train, y_train)
+    return model
+
     """
     Build and train a Lasso Regression model.
 
@@ -80,10 +93,13 @@ def build_lasso_regression(X_train, y_train, alpha=1.0):
         Lasso: Fitted model.
     """
     # TODO: Implement this function
-    raise NotImplementedError("Implement build_lasso_regression()")
+    #raise NotImplementedError("Implement build_lasso_regression()")
 
 
 def build_elasticnet_regression(X_train, y_train, alpha=1.0, l1_ratio=0.5):
+    model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio)
+    model.fit(X_train, y_train)
+    return model
     """
     Build and train an ElasticNet Regression model.
 
@@ -97,10 +113,18 @@ def build_elasticnet_regression(X_train, y_train, alpha=1.0, l1_ratio=0.5):
         ElasticNet: Fitted model.
     """
     # TODO: Implement this function
-    raise NotImplementedError("Implement build_elasticnet_regression()")
+    #raise NotImplementedError("Implement build_elasticnet_regression()")
 
 
 def build_polynomial_regression(X_train, y_train, degree=2):
+    poly = PolynomialFeatures(degree=degree, include_bias=False)
+    X_poly = poly.fit_transform(X_train)
+
+    model = LinearRegression()
+    model.fit(X_poly, y_train)
+
+    return model, poly
+
     """
     Build a Polynomial Regression model.
 
@@ -131,11 +155,15 @@ def build_polynomial_regression(X_train, y_train, degree=2):
     #   2. Transform X_train using fit_transform
     #   3. Fit LinearRegression on the transformed features
     #   4. Return both the model and the transformer
-    raise NotImplementedError("Implement build_polynomial_regression()")
+    #raise NotImplementedError("Implement build_polynomial_regression()")
 
 
 def build_decision_tree(X_train, y_train, max_depth=10, random_state=42):
-    """
+  model = DecisionTreeRegressor(max_depth=max_depth, random_state=random_state)
+  model.fit(X_train, y_train)
+  return model
+   
+  """
     Build and train a Decision Tree Regressor.
 
     Args:
@@ -148,10 +176,19 @@ def build_decision_tree(X_train, y_train, max_depth=10, random_state=42):
         DecisionTreeRegressor: Fitted model.
     """
     # TODO: Implement this function
-    raise NotImplementedError("Implement build_decision_tree()")
+  #raise NotImplementedError("Implement build_decision_tree()")
 
 
 def build_random_forest(X_train, y_train, n_estimators=100, max_depth=None, random_state=42):
+    model = RandomForestRegressor(
+        n_estimators=n_estimators,
+        max_depth=max_depth,
+        random_state=random_state
+        )
+    model.fit(X_train, y_train)
+    return model
+
+
     """
     Build and train a Random Forest Regressor.
 
@@ -166,10 +203,18 @@ def build_random_forest(X_train, y_train, n_estimators=100, max_depth=None, rand
         RandomForestRegressor: Fitted model.
     """
     # TODO: Implement this function
-    raise NotImplementedError("Implement build_random_forest()")
+    #raise NotImplementedError("Implement build_random_forest()")
 
 
 def build_gradient_boosting(X_train, y_train, n_estimators=100, learning_rate=0.1, random_state=42):
+    model = GradientBoostingRegressor(
+        n_estimators=n_estimators,
+        learning_rate=learning_rate,
+        random_state=random_state
+    )
+    model.fit(X_train, y_train)
+    return model
+
     """
     Build and train a Gradient Boosting Regressor (sklearn implementation).
 
@@ -184,10 +229,22 @@ def build_gradient_boosting(X_train, y_train, n_estimators=100, learning_rate=0.
         GradientBoostingRegressor: Fitted model.
     """
     # TODO: Implement this function
-    raise NotImplementedError("Implement build_gradient_boosting()")
+   # raise NotImplementedError("Implement build_gradient_boosting()")
 
 
 def build_xgboost(X_train, y_train, n_estimators=100, learning_rate=0.1, random_state=42):
+    import xgboost as xgb
+
+    model = xgb.XGBRegressor(
+        n_estimators=n_estimators,
+        learning_rate=learning_rate,
+        random_state=random_state,
+        objective="reg:squarederror",
+        verbosity=0
+    )
+    model.fit(X_train, y_train)
+    return model
+
     """
     Build and train an XGBoost Regressor.
 
@@ -203,10 +260,20 @@ def build_xgboost(X_train, y_train, n_estimators=100, learning_rate=0.1, random_
     """
     # TODO: Implement this function
     # Hint: import xgboost as xgb; use xgb.XGBRegressor
-    raise NotImplementedError("Implement build_xgboost()")
+    #raise NotImplementedError("Implement build_xgboost()")
 
 
 def build_lightgbm(X_train, y_train, n_estimators=100, learning_rate=0.1, random_state=42):
+    """Build and train a LightGBM Regressor."""
+    import lightgbm as lgb
+    model = lgb.LGBMRegressor(
+        n_estimators=n_estimators,
+        learning_rate=learning_rate,
+        random_state=random_state,
+        verbose=-1  # Reduces log clutter
+    )
+    model.fit(X_train, y_train)
+    return model
     """
     Build and train a LightGBM Regressor.
 
@@ -222,7 +289,7 @@ def build_lightgbm(X_train, y_train, n_estimators=100, learning_rate=0.1, random
     """
     # TODO: Implement this function
     # Hint: import lightgbm as lgb; use lgb.LGBMRegressor(verbose=-1)
-    raise NotImplementedError("Implement build_lightgbm()")
+   # raise NotImplementedError("Implement build_lightgbm()")
 
 
 # =============================================================================
@@ -230,6 +297,20 @@ def build_lightgbm(X_train, y_train, n_estimators=100, learning_rate=0.1, random
 # =============================================================================
 
 def evaluate_model(model, X_test, y_test):
+    y_pred = model.predict(X_test)
+
+    mse = mean_squared_error(y_test, y_pred)
+    rmse = np.sqrt(mse)
+    mae = mean_absolute_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+
+    return {
+        'mse': mse,
+        'rmse': rmse,
+        'mae': mae,
+        'r2': r2
+    }
+
     """
     Evaluate a regression model and return standard metrics.
 
@@ -257,11 +338,22 @@ def evaluate_model(model, X_test, y_test):
     #   1. Generate predictions using model.predict(X_test)
     #   2. Calculate MSE, RMSE (sqrt of MSE), MAE, and R²
     #   3. Return as a dictionary
-    raise NotImplementedError("Implement evaluate_model()")
+    # raise NotImplementedError("Implement evaluate_model()")
 
 
 def compare_models(models_dict, X_test, y_test):
-    """
+     results = {}
+     for name, model in models_dict.items():
+        # Special case for Polynomial Regression which returns a tuple
+        if isinstance(model, tuple):
+            m, poly = model
+            X_test_transformed = poly.transform(X_test)
+            results[name] = evaluate_model(m, X_test_transformed, y_test)
+        else:
+            results[name] = evaluate_model(model, X_test, y_test)
+     return pd.DataFrame(results).T
+     
+     """
     Compare multiple models and return a DataFrame of their metrics.
 
     Args:
@@ -291,11 +383,18 @@ def compare_models(models_dict, X_test, y_test):
     #   1. Loop through models_dict
     #   2. Call evaluate_model for each
     #   3. Collect results into a DataFrame
-    raise NotImplementedError("Implement compare_models()")
+     # raise NotImplementedError("Implement compare_models()")
 
 
 def cross_validate_model(model, X, y, cv=5, scoring='neg_mean_squared_error'):
-    """
+     scores = cross_val_score(model, X, y, cv=cv, scoring=scoring)
+     return {
+        'mean_score': np.mean(scores),
+        'std_score': np.std(scores),
+        'scores': scores
+    }
+
+     """
     Perform k-fold cross-validation on a model.
 
     Args:
@@ -322,4 +421,4 @@ def cross_validate_model(model, X, y, cv=5, scoring='neg_mean_squared_error'):
     # Hints:
     #   1. Use cross_val_score from sklearn
     #   2. Return mean, std, and all individual fold scores
-    raise NotImplementedError("Implement cross_validate_model()")
+     #raise NotImplementedError("Implement cross_validate_model()")
