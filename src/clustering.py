@@ -262,6 +262,7 @@ def tune_dbscan(X, eps_range=None, min_samples_range=None):
   for eps in eps_range:
         for min_samples in min_samples_range:
             res = perform_dbscan(X, eps=eps, min_samples=min_samples)
+
             results.append({
                 'eps': eps,
                 'min_samples': min_samples,
@@ -363,7 +364,7 @@ def find_optimal_components(X, variance_threshold=0.95):
     cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
     
     # We add 1 because index 0 represents the first component.
-    n_components = np.argmax(cumulative_variance >= variance_threshold) + 1
+    n_components = np.searchsorted(cumulative_variance, variance_threshold, side='left') + 1
     
     return int(n_components)
     """
