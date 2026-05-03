@@ -284,7 +284,7 @@ def user_based_collaborative_filter(user_property_matrix, user_index, n_recommen
     #   2. Find top-k similar users (e.g., top 10)
     #   3. For unrated properties of target user, compute weighted average rating
     #   4. Return top-n properties by predicted rating
-     raise NotImplementedError("Implement user_based_collaborative_filter()")
+     # raise NotImplementedError("Implement user_based_collaborative_filter()")
 
 
 def item_based_collaborative_filter(user_property_matrix, user_index, n_recommendations=5):
@@ -345,7 +345,7 @@ def item_based_collaborative_filter(user_property_matrix, user_index, n_recommen
         True
     """
     # TODO: Implement this function
-  raise NotImplementedError("Implement item_based_collaborative_filter()")
+  # raise NotImplementedError("Implement item_based_collaborative_filter()")
 
 
 # =============================================================================
@@ -359,48 +359,67 @@ def hybrid_recommend(
     property_index,
     content_weight=0.5,
     collaborative_weight=0.5,
-    n_recommendations=5
-):
-    sim_matrix = compute_property_similarity(property_features)
-    content_scores = sim_matrix[property_index]
+    n_recommendations=5 
+    ):
+    
+    # Content-based similarity
+    content_similarity = cosine_similarity(property_features)
+    content_scores = content_similarity[property_index]
 
-    # collaborative scores (user-based)
+    # Collaborative recommendations
     collab_recs = user_based_collaborative_filter(
-        user_property_matrix, user_index, n_recommendations=100
+        user_property_matrix,
+        user_index=user_index,
+        n_recommendations=100
     )
-    collab_dict = {r['property_index']: r['predicted_rating'] for r in collab_recs}
 
-    # normalize content
-    content_norm = (content_scores - content_scores.min()) / (content_scores.max() - content_scores.min() + 1e-8)
-     # normalize collaborative
-    if collab_dict:
-        vals = np.array(list(collab_dict.values()))
-        min_v, max_v = vals.min(), vals.max()
+    collab_scores = {
+        rec["property_index"]: rec["predicted_rating"]
+        for rec in collab_recs
+    }
+
+    # Normalize content scores
+    content_norm = (content_scores - content_scores.min()) / (
+        content_scores.max() - content_scores.min() + 1e-8
+    )
+
+    # Normalize collaborative scores
+    if collab_scores:
+        values = np.array(list(collab_scores.values()))
         collab_norm = {
-            k: (v - min_v) / (max_v - min_v + 1e-8)
-            for k, v in collab_dict.items()
+            item: (score - values.min()) / (values.max() - values.min() + 1e-8)
+            for item, score in collab_scores.items()
         }
     else:
         collab_norm = {}
 
-        results = []
+    # IMPORTANT: results must be outside if/else
+    results = []
 
-    for i in range(len(content_scores)):
-        if i == property_index:
+    for item_idx in range(len(content_scores)):
+        if item_idx == property_index:
             continue
 
-        c_score = content_norm[i]
-        col_score = collab_norm.get(i, 0)
+        if user_property_matrix[user_index, item_idx] != 0:
+            continue
 
-        hybrid_score = content_weight * c_score + collaborative_weight * col_score
+        content_score = content_norm[item_idx]
+        collaborative_score = collab_norm.get(item_idx, 0)
+
+        hybrid_score = (
+            content_weight * content_score
+            + collaborative_weight * collaborative_score
+        )
 
         results.append({
-            'property_index': int(i),
-            'content_score': float(c_score),
-            'collaborative_score': float(col_score),
-            'hybrid_score': float(hybrid_score)
+            "property_index": int(item_idx),
+            "content_score": float(content_score),
+            "collaborative_score": float(collaborative_score),
+            "hybrid_score": float(hybrid_score)
         })
-    results.sort(key=lambda x: x['hybrid_score'], reverse=True)
+
+    results.sort(key=lambda x: x["hybrid_score"], reverse=True)
+
     return results[:n_recommendations]
 
     """
@@ -440,7 +459,7 @@ def hybrid_recommend(
     #   3. Normalize both score sets to [0, 1]
     #   4. Combine: hybrid = content_weight * content + collaborative_weight * collab
     #   5. Return top-n by hybrid_score
-    raise NotImplementedError("Implement hybrid_recommend()")
+   # raise NotImplementedError("Implement hybrid_recommend()")
 
 
 def evaluate_recommendations(recommendations, ground_truth_ratings, threshold=3.5):
@@ -494,4 +513,4 @@ def evaluate_recommendations(recommendations, ground_truth_ratings, threshold=3.
         0.6666666666666666
     """
     # TODO: Implement this function
- raise NotImplementedError("Implement evaluate_recommendations()")
+    # raise NotImplementedError("Implement evaluate_recommendations()")
