@@ -18,6 +18,13 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 
 def load_housing_data():
+    data = fetch_california_housing(as_frame=True)
+
+    df = data.frame.copy()
+    df.rename(columns={"MedHouseVal": "MedHouseVal"}, inplace=True)
+
+    return df
+
     """
     Load the California Housing dataset and return it as a pandas DataFrame.
 
@@ -40,6 +47,21 @@ def load_housing_data():
 
 
 def preprocess_features(df, target_col='MedHouseVal'):
+    if target_col not in df.columns:
+        raise ValueError(f"Target column '{target_col}' not found in DataFrame.")
+
+    # Separate features and target
+    X = df.drop(columns=[target_col])
+    y = df[target_col].values
+
+    feature_names = X.columns.tolist()
+
+    # Scale features
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    return X_scaled, y, feature_names, scaler
+
     """
     Separate features and target, then apply standard scaling to features.
 
@@ -71,6 +93,7 @@ def preprocess_features(df, target_col='MedHouseVal'):
 
 
 def split_data(X, y, test_size=0.2, random_state=42):
+    return train_test_split(X, y, test_size=test_size, random_state=random_state)
     """
     Split data into training and testing sets.
 
@@ -97,6 +120,31 @@ def split_data(X, y, test_size=0.2, random_state=42):
 
 
 def create_feature_engineering(df):
+    df_eng = df.copy()
+
+    # Avoid division by zero using np.where
+    ave_rooms = df_eng["AveRooms"].values
+    ave_bedrms = df_eng["AveBedrms"].values
+    ave_occup = df_eng["AveOccup"].values
+    population = df_eng["Population"].values
+
+    # Feature 1: rooms per household (proxy)
+    df_eng["rooms_per_household"] = ave_rooms * ave_occup
+
+    # Feature 2: bedrooms ratio
+    df_eng["bedrooms_ratio"] = np.where(
+        ave_rooms != 0,
+        ave_bedrms / ave_rooms,
+        0
+    )
+    df_eng["population_density"] = np.where(
+        ave_occup != 0,
+        population / ave_occup,
+        0
+    )
+
+    return df_eng
+
     """
     Create new engineered features from the existing dataset.
 

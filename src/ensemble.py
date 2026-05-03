@@ -28,6 +28,19 @@ from sklearn.metrics import mean_squared_error, r2_score
 # =============================================================================
 
 def build_voting_ensemble(X_train, y_train, models=None):
+    if models is None:
+        models = [
+            ("ridge", Ridge(alpha=1.0)),
+            ("rf", RandomForestRegressor(n_estimators=100, random_state=42)),
+            ("gb", GradientBoostingRegressor(n_estimators=100, random_state=42)),
+        ]
+
+    
+    ensemble = VotingRegressor(estimators=models)
+    ensemble.fit(X_train, y_train)
+
+    return ensemble
+ 
     """
     Build and train a Voting Regressor ensemble.
 
@@ -60,11 +73,49 @@ def build_voting_ensemble(X_train, y_train, models=None):
     #   1. If models is None, create the default list of estimators
     #   2. Create a VotingRegressor with the estimators
     #   3. Fit on the training data
-    raise NotImplementedError("Implement build_voting_ensemble()")
+    # raise NotImplementedError("Implement build_voting_ensemble()")
 
 
 def evaluate_voting_vs_individual(X_train, y_train, X_test, y_test, models=None):
-    """
+  if models is None:
+        models = [
+            ('ridge', Ridge(alpha=1.0)),
+            ('rf', RandomForestRegressor(n_estimators=100, random_state=42)),
+            ('gb', GradientBoostingRegressor(n_estimators=100, random_state=42))
+        ]
+
+
+  results = []
+
+    # 1. Evaluate Individual Models
+
+  for name, model in models:
+        model.fit(X_train, y_train)
+        preds = model.predict(X_test)
+        mse = mean_squared_error(y_test, preds)
+
+        results.append({
+            'model': name,
+            'mse': mse,
+            'rmse': np.sqrt(mse),
+            'r2': r2_score(y_test, preds)
+        })
+
+    # 2. Evaluate Voting Ensemble
+  voting_model = build_voting_ensemble(X_train, y_train, models=models)
+  voting_preds = voting_model.predict(X_test)
+  voting_mse = mean_squared_error(y_test, voting_preds)
+    
+  results.append({
+        "model": "VotingEnsemble",
+        "mse": voting_mse,
+        "rmse": np.sqrt(voting_mse),
+        "r2": r2_score(y_test, voting_preds),
+    })
+
+  return pd.DataFrame(results)
+
+  """
     Compare the voting ensemble against each individual model.
 
     Args:
@@ -90,7 +141,7 @@ def evaluate_voting_vs_individual(X_train, y_train, X_test, y_test, models=None)
     #   1. Train each individual model and evaluate on test set
     #   2. Train the voting ensemble and evaluate on test set
     #   3. Collect all results into a DataFrame
-    raise NotImplementedError("Implement evaluate_voting_vs_individual()")
+    # raise NotImplementedError("Implement evaluate_voting_vs_individual()")
 
 
 # =============================================================================
@@ -98,7 +149,27 @@ def evaluate_voting_vs_individual(X_train, y_train, X_test, y_test, models=None)
 # =============================================================================
 
 def build_stacking_ensemble(X_train, y_train, base_models=None, meta_model=None):
-    """
+
+  if base_models is None:
+        base_models = [
+            ('ridge', Ridge(alpha=1.0)),
+            ('rf', RandomForestRegressor(n_estimators=100, random_state=42)),
+            ('gb', GradientBoostingRegressor(n_estimators=100, random_state=42))
+        ]
+    
+  if meta_model is None:
+        meta_model = LinearRegression()
+
+  stacking_reg = StackingRegressor(
+        estimators=base_models,
+        final_estimator=meta_model,
+        cv=5
+    )
+    
+  stacking_reg.fit(X_train, y_train)
+  return stacking_reg
+
+  """
     Build and train a Stacking Regressor ensemble.
 
     Stacking uses a meta-learner to combine predictions from base models.
@@ -130,10 +201,34 @@ def build_stacking_ensemble(X_train, y_train, base_models=None, meta_model=None)
     #   2. If meta_model is None, use LinearRegression()
     #   3. Create StackingRegressor(estimators=base_models, final_estimator=meta_model, cv=5)
     #   4. Fit on training data
-    raise NotImplementedError("Implement build_stacking_ensemble()")
+    # raise NotImplementedError("Implement build_stacking_ensemble()")
 
 
 def evaluate_stacking_vs_voting(X_train, y_train, X_test, y_test):
+
+    base_models = [
+        ('ridge', Ridge(alpha=1.0)),
+        ('rf', RandomForestRegressor(n_estimators=100, random_state=42)),
+        ('gb', GradientBoostingRegressor(n_estimators=100, random_state=42))
+    ]
+
+    # Re-use the voting evaluation logic to get base + voting results
+    df_results = evaluate_voting_vs_individual(X_train, y_train, X_test, y_test, models=base_models)
+
+    # Add Stacking Evaluation
+    stacking_model = build_stacking_ensemble(X_train, y_train, base_models=base_models)
+    s_preds = stacking_model.predict(X_test)
+    s_mse = mean_squared_error(y_test, s_preds)
+
+    stacking_row = pd.DataFrame([{
+        'model': 'StackingEnsemble',
+        'mse': s_mse,
+        'rmse': np.sqrt(s_mse),
+        'r2': r2_score(y_test, s_preds)
+    }])
+
+    return pd.concat([df_results, stacking_row], ignore_index=True)
+
     """
     Compare stacking ensemble vs voting ensemble vs individual models.
 
@@ -155,7 +250,7 @@ def evaluate_stacking_vs_voting(X_train, y_train, X_test, y_test):
         True
     """
     # TODO: Implement this function
-    raise NotImplementedError("Implement evaluate_stacking_vs_voting()")
+    # raise NotImplementedError("Implement evaluate_stacking_vs_voting()")
 
 
 # =============================================================================
@@ -163,6 +258,10 @@ def evaluate_stacking_vs_voting(X_train, y_train, X_test, y_test):
 # =============================================================================
 
 def save_model(model, filepath):
+
+    joblib.dump(model, filepath)
+    return filepath
+
     """
     Save a trained model to disk using joblib.
 
@@ -182,11 +281,14 @@ def save_model(model, filepath):
         True
     """
     # TODO: Implement this function
-    raise NotImplementedError("Implement save_model()")
+    # raise NotImplementedError("Implement save_model()")
 
 
 def load_model(filepath):
-    """
+
+ return joblib.load(filepath)
+
+ """
     Load a trained model from disk.
 
     Args:
@@ -205,4 +307,4 @@ def load_model(filepath):
         array([4.])
     """
     # TODO: Implement this function
-    raise NotImplementedError("Implement load_model()")
+    # raise NotImplementedError("Implement load_model()")
