@@ -28,19 +28,20 @@ from sklearn.metrics import mean_squared_error, r2_score
 # =============================================================================
 
 def build_voting_ensemble(X_train, y_train, models=None):
- 
- if models is None:
+    if models is None:
         models = [
-            ('ridge', Ridge(alpha=1.0)),
-            ('rf', RandomForestRegressor(n_estimators=100, random_state=42)),
-            ('gb', GradientBoostingRegressor(n_estimators=100, random_state=42))
+            ("ridge", Ridge(alpha=1.0)),
+            ("rf", RandomForestRegressor(n_estimators=100, random_state=42)),
+            ("gb", GradientBoostingRegressor(n_estimators=100, random_state=42)),
         ]
-    
-        ensemble = VotingRegressor(estimators=models)
- ensemble.fit(X_train, y_train)
- return ensemble
 
- """
+    
+    ensemble = VotingRegressor(estimators=models)
+    ensemble.fit(X_train, y_train)
+
+    return ensemble
+ 
+    """
     Build and train a Voting Regressor ensemble.
 
     The VotingRegressor averages predictions from multiple base models.
@@ -82,14 +83,17 @@ def evaluate_voting_vs_individual(X_train, y_train, X_test, y_test, models=None)
             ('rf', RandomForestRegressor(n_estimators=100, random_state=42)),
             ('gb', GradientBoostingRegressor(n_estimators=100, random_state=42))
         ]
+
+
   results = []
 
     # 1. Evaluate Individual Models
+
   for name, model in models:
         model.fit(X_train, y_train)
         preds = model.predict(X_test)
-        
         mse = mean_squared_error(y_test, preds)
+
         results.append({
             'model': name,
             'mse': mse,
@@ -99,17 +103,18 @@ def evaluate_voting_vs_individual(X_train, y_train, X_test, y_test, models=None)
 
     # 2. Evaluate Voting Ensemble
   voting_model = build_voting_ensemble(X_train, y_train, models=models)
-  v_preds = voting_model.predict(X_test)
-  v_mse = mean_squared_error(y_test, v_preds)
+  voting_preds = voting_model.predict(X_test)
+  voting_mse = mean_squared_error(y_test, voting_preds)
     
   results.append({
-        'model': 'VotingEnsemble',
-        'mse': v_mse,
-        'rmse': np.sqrt(v_mse),
-        'r2': r2_score(y_test, v_preds)
+        "model": "VotingEnsemble",
+        "mse": voting_mse,
+        "rmse": np.sqrt(voting_mse),
+        "r2": r2_score(y_test, voting_preds),
     })
 
   return pd.DataFrame(results)
+
   """
     Compare the voting ensemble against each individual model.
 
