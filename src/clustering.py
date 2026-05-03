@@ -25,6 +25,25 @@ from scipy.cluster.hierarchy import linkage, dendrogram
 # =============================================================================
 
 def find_optimal_k(X, k_range=range(2, 11), random_state=42):
+
+    inertias = []
+    silhouette_scores = []
+    k_list = list(k_range)
+
+    for k in k_list:
+        kmeans = KMeans(n_clusters=k, random_state=random_state, n_init=10)
+        labels = kmeans.fit_predict(X)
+        inertias.append(kmeans.inertia_)
+        silhouette_scores.append(silhouette_score(X, labels))
+
+    best_k_silhouette = k_list[np.argmax(silhouette_scores)]
+
+    return {
+        'inertias': inertias,
+        'silhouette_scores': silhouette_scores,
+        'k_range': k_list,
+        'best_k_silhouette': int(best_k_silhouette)
+    }
     """
     Find the optimal number of clusters using the Elbow method and Silhouette scores.
 
@@ -55,11 +74,25 @@ def find_optimal_k(X, k_range=range(2, 11), random_state=42):
     #   1. For each k in k_range, fit KMeans and record inertia_
     #   2. Compute silhouette_score for each clustering
     #   3. Find the k with the highest silhouette score
-    raise NotImplementedError("Implement find_optimal_k()")
+    # raise NotImplementedError("Implement find_optimal_k()")
 
 
 def perform_kmeans(X, n_clusters, random_state=42):
-    """
+
+  model = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10)
+  labels = model.fit_predict(X)
+    
+  score = silhouette_score(X, labels)
+
+  return {
+        'model': model,
+        'labels': labels,
+        'centroids': model.cluster_centers_,
+        'inertia': model.inertia_,
+        'silhouette': score
+    }
+
+  """
     Perform K-Means clustering.
 
     Args:
@@ -86,7 +119,7 @@ def perform_kmeans(X, n_clusters, random_state=42):
         True
     """
     # TODO: Implement this function
-    raise NotImplementedError("Implement perform_kmeans()")
+    # raise NotImplementedError("Implement perform_kmeans()")
 
 
 # =============================================================================
@@ -94,6 +127,18 @@ def perform_kmeans(X, n_clusters, random_state=42):
 # =============================================================================
 
 def perform_hierarchical_clustering(X, n_clusters, linkage_method='ward'):
+
+    model = AgglomerativeClustering(n_clusters=n_clusters, linkage=linkage_method)
+    labels = model.fit_predict(X)
+    
+    score = silhouette_score(X, labels)
+
+    return {
+        'model': model,
+        'labels': labels,
+        'silhouette': score,
+        'n_clusters': n_clusters
+    }
     """
     Perform Agglomerative (Hierarchical) Clustering.
 
@@ -122,6 +167,7 @@ def perform_hierarchical_clustering(X, n_clusters, linkage_method='ward'):
 
 
 def compute_linkage_matrix(X, method='ward'):
+    return linkage(X, method=method)
     """
     Compute the linkage matrix for dendrogram visualization.
 
@@ -148,7 +194,29 @@ def compute_linkage_matrix(X, method='ward'):
 # =============================================================================
 
 def perform_dbscan(X, eps=0.5, min_samples=5):
-    """
+  
+  model = DBSCAN(eps=eps, min_samples=min_samples)
+  labels = model.fit_predict(X)
+    
+    # Identify unique clusters (excluding noise label -1)
+  unique_labels = set(labels)
+  n_clusters = len([l for l in unique_labels if l >= 0])
+  n_noise = list(labels).count(-1)
+    
+    # Silhouette requires at least 2 clusters and no pure noise
+  score = None
+  if n_clusters >= 2:
+        score = silhouette_score(X, labels)
+
+  return {
+        'model': model,
+        'labels': labels,
+        'n_clusters': n_clusters,
+        'n_noise': n_noise,
+        'silhouette': score
+    }
+
+  """
     Perform DBSCAN clustering.
 
     Args:
@@ -179,11 +247,32 @@ def perform_dbscan(X, eps=0.5, min_samples=5):
     #   1. Fit DBSCAN on X
     #   2. Count unique labels (excluding -1 for noise)
     #   3. Only compute silhouette if there are >= 2 clusters
-    raise NotImplementedError("Implement perform_dbscan()")
+    # raise NotImplementedError("Implement perform_dbscan()")
 
 
 def tune_dbscan(X, eps_range=None, min_samples_range=None):
-    """
+  
+  if eps_range is None:
+        eps_range = [0.3, 0.5, 0.7, 1.0, 1.5]
+  if min_samples_range is None:
+        min_samples_range = [3, 5, 7, 10]
+        
+  results = []
+    
+  for eps in eps_range:
+        for min_samples in min_samples_range:
+            res = perform_dbscan(X, eps=eps, min_samples=min_samples)
+            results.append({
+                'eps': eps,
+                'min_samples': min_samples,
+                'n_clusters': res['n_clusters'],
+                'n_noise': res['n_noise'],
+                'silhouette': res['silhouette']
+            })
+
+  return pd.DataFrame(results)
+
+  """
     Tune DBSCAN hyperparameters by testing combinations of eps and min_samples.
 
     Args:
@@ -205,7 +294,7 @@ def tune_dbscan(X, eps_range=None, min_samples_range=None):
         True
     """
     # TODO: Implement this function
-    raise NotImplementedError("Implement tune_dbscan()")
+    # raise NotImplementedError("Implement tune_dbscan()")
 
 
 # =============================================================================
@@ -213,6 +302,24 @@ def tune_dbscan(X, eps_range=None, min_samples_range=None):
 # =============================================================================
 
 def perform_pca(X, n_components=None):
+
+  # Initialize and fit PCA
+    pca = PCA(n_components=n_components)
+    transformed_data = pca.fit_transform(X)
+    
+    # Extract variance information
+    exp_var = pca.explained_variance_ratio_
+    cum_var = np.cumsum(exp_var)
+    
+    # Return a structured dictionary for easy access
+    return {
+        'model': pca,
+        'transformed': transformed_data,
+        'explained_variance_ratio': exp_var,
+        'cumulative_variance': cum_var,
+        'n_components': pca.n_components_
+    }
+
     """
     Perform PCA on the feature matrix.
 
@@ -249,6 +356,16 @@ def perform_pca(X, n_components=None):
 
 
 def find_optimal_components(X, variance_threshold=0.95):
+
+    pca = PCA().fit(X)
+    
+    # Calculate cumulative variance across all components
+    cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
+    
+    # We add 1 because index 0 represents the first component.
+    n_components = np.argmax(cumulative_variance >= variance_threshold) + 1
+    
+    return int(n_components)
     """
     Find the minimum number of PCA components that explain at least
     the specified variance threshold.
@@ -271,10 +388,24 @@ def find_optimal_components(X, variance_threshold=0.95):
     #   1. Fit PCA with all components
     #   2. Compute cumulative variance
     #   3. Find the first index where cumulative variance >= threshold
-    raise NotImplementedError("Implement find_optimal_components()")
+    # raise NotImplementedError("Implement find_optimal_components()")
 
 
 def cluster_with_pca(X, n_clusters, n_components=2, random_state=42):
+
+    pca_results = perform_pca(X, n_components=n_components)
+    pca_data = pca_results['transformed']
+    
+    kmeans_results = perform_kmeans(pca_data, n_clusters=n_clusters, random_state=random_state)
+    
+    return {
+        'pca_model': pca_results['model'],
+        'kmeans_model': kmeans_results['model'],
+        'pca_data': pca_data,
+        'labels': kmeans_results['labels'],
+        'silhouette': kmeans_results['silhouette']
+    }
+
     """
     Apply PCA for dimensionality reduction, then cluster using K-Means.
 
@@ -303,4 +434,4 @@ def cluster_with_pca(X, n_clusters, n_components=2, random_state=42):
         True
     """
     # TODO: Implement this function
-    raise NotImplementedError("Implement cluster_with_pca()")
+    # raise NotImplementedError("Implement cluster_with_pca()")
