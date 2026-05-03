@@ -1,0 +1,26 @@
+Among the three approaches user-based collaborative filtering, item-based collaborative filtering, and the hybrid recommender
+the hybrid recommender approach consistently produced the most relevant recommendations because, it combines the strengths 
+of content-based and collaborative filtering. The hybrid model strikes a compromise between personalization and relevance by giving weights to both collaboration ratings and content similarity. 
+Additionally, when experimenting with different weights, I was observing that:
+
+Higher content weight improved stability and consistency.
+Higher collaborative weight improved personalization when sufficient data existed.
+A balanced weight  provided the best overall performance.
+
+
+
+This enhancement primarily results from its capacity to integrate collaborative behavior, which enables it to overcome the shortcomings of each separate approach.The user-based collaborative filtering approach relies on finding users with similar preferences and recommending properties they have interacted with. Its efficacy is constrained in limited information.  In our case, many users lacked sufficient overlapping encounters since the interaction matrix was artificially created and extremely sparse.
+The item-based collaborative filtering approach performed slightly better in terms of stability. It recommends properties that are similar to the ones a user has already shown interest in. This works well because property characteristics tend to be more consistent than user behavior. However, this method lacks deeper personalization. The hybrid system addressed these limitations by combining both approaches. It used property features such as income, location, and occupancy.
+
+
+
+Limitation of each method for real estate:
+Cold-start problem for new users
+Difficult to find truly similar users due to limited interactions
+Item-Based Collaborative Filtering
+Limited personalization
+Assumes user preferences remain constant
+Does not capture broader behavioral patterns
+Hybrid Recommendation System
+More complex to implement
+Requires both high-quality feature data and interaction data
